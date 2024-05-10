@@ -13,6 +13,9 @@ There are 2 ways to use:
  There are options to only patch the CRC32 of AndroidManifest.xml and classes.dex files, and to toggle the restoration of the last modified date of files in the archive.
 # Screenshots
 Screen after sharing files with the app
-![Screen after sharing files with the app](Screenshot_2024-05-09-22-46-57-254_com.AbdurazaaqMohammed.restoreCRC.jpg)
+
+<img src=".github/readme-images/Screenshot_2024-05-09-22-46-57-254_com.AbdurazaaqMohammed.restoreCRC.jpg" width="33%" />
+
 Main screen
-![Homescreen](Screenshot_2024-05-09-22-46-23-282_com.AbdurazaaqMohammed.restoreCRC.jpg)
+
+<img src=".github/readme-images/Screenshot_2024-05-09-22-46-23-282_com.AbdurazaaqMohammed.restoreCRC.jpg" width="33%" />
