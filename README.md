@@ -13,7 +13,7 @@ There are 2 ways to use:
  There are options to only patch the CRC32 of AndroidManifest.xml and classes.dex files, and to toggle the restoration of the last modified date of files in the archive.
 
 ## Limitation
-The original file you pick must be the *actual original* file and not one that you already restored the CRC of.
+The original file you pick must be the *actual* original, unmodified file and not one that you already restored the CRC of.
 
 # Screenshots
 Screen after sharing files with the app
