@@ -19,3 +19,5 @@ Screen after sharing files with the app
 Main screen
 
 <img src=".github/readme-images/Screenshot_2024-05-09-22-46-23-282_com.AbdurazaaqMohammed.restoreCRC.jpg" width="33%" />
+
+Icon edited from <a href="https://vectorified.com/reset-button-icon">Reset Button Icon</a>
