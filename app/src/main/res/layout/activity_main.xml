@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+tools:context=".MainActivity"
+tools:visibility="visible"
+android:orientation="vertical"
+android:background="#000000" >
+
+        <Button
+            android:id="@+id/pickOriginalFile"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pick_original_file" />
+
+        <Button
+            android:id="@+id/pickModifiedFile"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/pick_modified_file" />
+
+        <Button
+            android:id="@+id/start"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/start" />
+
+        <TextView
+            android:id="@+id/onlyAMAndDexInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="#673AB7"
+            android:text="@string/only_patch_am_dex"
+            android:textIsSelectable="true" />
+
+        <ToggleButton
+            android:id="@+id/onlyAMAndDexSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:textSize="20sp"
+            android:textColor="#673AB7" />
+
+        <TextView
+            android:id="@+id/setOldDateInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="#673AB7"
+            android:text="@string/restore_date"
+            android:textIsSelectable="true" />
+
+        <ToggleButton
+            android:id="@+id/setOldDateSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:textSize="20sp"
+            android:text="@string/restore_date"
+            android:textColor="#673AB7" />
+
+        <TextView
+            android:id="@+id/errorField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="#673AB7"
+            android:textIsSelectable="true"
+            android:visibility="gone"/>
+</LinearLayout>

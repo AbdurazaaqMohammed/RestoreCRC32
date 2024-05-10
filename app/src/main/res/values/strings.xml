@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Restore CRC32</string>
+    <string name="success">Saved successfully</string>
+    <string name="pick_original_file">Pick Original File</string>
+    <string name="pick_modified_file">Pick Modified File</string>
+    <string name="start">Start</string>
+    <string name="no_change">No change detected</string>
+    <string name="only_patch_am_dex">Only patch AndroidManifest.xml and classes.dex files</string>
+    <string name="restore_date">Restore old date modified</string>
+    <string name="original_file">Original File</string>
+    <string name="modified_file">Modified File</string>
+    <string name="ask">Which file is this?</string>
+    <string name="select_original">Select original file</string>
+    <string name="select_modified">Select file to be patched"</string>
+    <string name="err_orig">Original file not chosen</string>
+    <string name="err_mod">File to patch not chosen</string>
+</resources>
