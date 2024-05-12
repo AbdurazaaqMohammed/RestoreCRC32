@@ -26,6 +26,11 @@ import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 import com.github.angads25.filepicker.view.FilePickerDialog;
 
+import net.lingala.zip4j.io.inputstream.ZipInputStream;
+import net.lingala.zip4j.model.LocalFileHeader;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.model.enums.CompressionMethod;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,13 +39,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.CRC32;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.ZipException;
 
 public class MainActivity extends Activity {
     private static final int REQUEST_CODE_SET_ORIGINAL_FILE = 1;
@@ -284,21 +288,23 @@ public class MainActivity extends Activity {
             }
             return crc.getValue();
         }
-        private static List<Map<String, Object>> getCRC(InputStream file) throws IOException {
+        private static List<Map<String, Object>> getCRC(InputStream is) throws IOException {
             List<Map<String, Object>> res = new ArrayList<>();
-            ZipInputStream zipStream = new ZipInputStream(file);
-            ZipEntry entry;
-            while ((entry = zipStream.getNextEntry()) != null) {
-                if (!onlyPatchAndroidManifestAndClasses || entry.getName().contains(".dex") || entry.getName().contains("AndroidManifest.xml")) {
+            ZipInputStream zipStream = new ZipInputStream(is);
+            LocalFileHeader entry;
+            while (true) {
+                entry = zipStream.getNextEntry();
+                if (entry == null) break;
+                final String fileName = entry.getFileName();
+                if (!onlyPatchAndroidManifestAndClasses || fileName.contains(".dex") || fileName.contains("AndroidManifest.xml")) {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("name", entry.getName());
+                    map.put("name", fileName);
                     map.put("crc", calculateCRC(zipStream));
                     res.add(map);
                 }
             }
             return res;
         }
-
         private static void patchCRC(Uri uriOfOriginalFile, Uri uriOfFileToPatch, Map<byte[], byte[]> patches, FileOutputStream fos) throws IOException {
             MainActivity activity = activityReference.get();
             byte[] bytesToPatch = restoreLastModifiedDate ? restoreLastModifiedDates(new ZipInputStream(activity.getContentResolver().openInputStream(uriOfOriginalFile)), new ZipInputStream(activity.getContentResolver().openInputStream(uriOfFileToPatch)), new ZipInputStream(activity.getContentResolver().openInputStream(uriOfFileToPatch))) : readAllBytes(activity.getContentResolver().openInputStream(uriOfFileToPatch));
@@ -323,7 +329,7 @@ public class MainActivity extends Activity {
 
         private static void patchCRC(Map<byte[], byte[]> patches, FileOutputStream fos) throws IOException {
             MainActivity activity = activityReference.get();
-            byte[] bytesToPatch = readAllBytes(new FileInputStream(originalFile));
+            byte[] bytesToPatch = restoreLastModifiedDate ? restoreLastModifiedDates(new ZipInputStream(activity.getContentResolver().openInputStream(uriOfOriginalFile)), new ZipInputStream(new FileInputStream(fileToPatch)), new ZipInputStream(new FileInputStream(fileToPatch))) : readAllBytes(new FileInputStream(originalFile));
             for (Map.Entry<byte[], byte[]> patch : patches.entrySet()) {
                 byte[] toReplace = patch.getKey();
                 byte[] orig = patch.getValue();
@@ -338,7 +344,7 @@ public class MainActivity extends Activity {
                     }
                 }
             }
-            if(restoreLastModifiedDate) bytesToPatch = restoreLastModifiedDates(new ZipInputStream(activity.getContentResolver().openInputStream(uriOfOriginalFile)), new ZipInputStream(new FileInputStream(fileToPatch)), new ZipInputStream(new FileInputStream(fileToPatch)));
+
             fos.write(bytesToPatch);
             fos.flush();
             fos.close();
@@ -352,53 +358,51 @@ public class MainActivity extends Activity {
             return bytes;
         }
 
-        private static byte[] readAllBytes(InputStream inputStream) {
+        private static byte[] readAllBytes(InputStream inputStream) throws IOException {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[1024];
             int bytesRead;
-            try {
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    byteArrayOutputStream.write(buffer, 0, bytesRead);
-                }
-            } catch (IOException e) {
-                return null;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
             }
             return byteArrayOutputStream.toByteArray();
         }
         private static byte[] restoreLastModifiedDates(ZipInputStream originalZipInputStream, ZipInputStream patchedZipInputStream, ZipInputStream patchedZipInputStreamAgain) throws IOException {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ZipEntry originalEntry;
-            ZipEntry patchedEntry;
+            LocalFileHeader originalEntry;
+            LocalFileHeader patchedEntry;
 
             Map<String, Long> lastModifiedMap = new HashMap<>();
 
+            Map<String, Long> crcMap = new HashMap<>();
+
             while ((originalEntry = originalZipInputStream.getNextEntry()) != null && (patchedEntry = patchedZipInputStream.getNextEntry()) != null) {
-                if (!originalEntry.isDirectory() && !patchedEntry.isDirectory() && (!onlyPatchAndroidManifestAndClasses || originalEntry.getName().contains(".dex") || originalEntry.getName().contains("AndroidManifest.xml"))) {
-                    long lastModified = originalEntry.getTime();
-                    lastModifiedMap.put(patchedEntry.getName(), lastModified);
-                }
+                long lastModified = originalEntry.getLastModifiedTime();
+                lastModifiedMap.put(patchedEntry.getFileName(), lastModified);
+                crcMap.put(patchedEntry.getFileName(), originalEntry.getCrc());
             }
 
             originalZipInputStream.close();
             patchedZipInputStream.close();
-
-            ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            net.lingala.zip4j.io.outputstream.ZipOutputStream zipOutputStream = new net.lingala.zip4j.io.outputstream.ZipOutputStream(bs);
 
             byte[] buffer = new byte[1024];
             int bytesRead;
-            ZipEntry entry;
-
+            LocalFileHeader entry;
             while ((entry = patchedZipInputStreamAgain.getNextEntry()) != null) {
-                ZipEntry newEntry = new ZipEntry(entry.getName());
-                zipOutputStream.putNextEntry(newEntry);
+                ZipParameters zs = new ZipParameters();
+                final String name = entry.getFileName();
+                zs.setFileNameInZip(name);
+                final CompressionMethod cm = entry.getCompressionMethod();
+                zs.setCompressionMethod(cm);
+                if(cm.equals(CompressionMethod.STORE)) zs.setEntrySize(entry.getUncompressedSize());
+                zs.setEntryCRC(crcMap.get(name)); // This does not actually set the old CRC but you need to do this otherwise zip4j creates a new CRC if the file was already modified and then the byte patch doesn't work because it didn't look for that CRC. This is another reason to use ZipFile
+                zs.setLastModifiedFileTime(lastModifiedMap.get(name));
+                zipOutputStream.putNextEntry(zs);
+
 
                 while ((bytesRead = patchedZipInputStreamAgain.read(buffer)) != -1) {
                     zipOutputStream.write(buffer, 0, bytesRead);
-                }
-
-                long lastModified = lastModifiedMap.get(entry.getName());
-                if (lastModified != -1) {
-                    newEntry.setTime(lastModified);
                 }
 
                 zipOutputStream.closeEntry();
@@ -406,8 +410,7 @@ public class MainActivity extends Activity {
 
             patchedZipInputStreamAgain.close();
             zipOutputStream.close();
-
-            return outputStream.toByteArray();
+            return bs.toByteArray();
         }
 
         @Override
@@ -453,7 +456,7 @@ public class MainActivity extends Activity {
                     activity.toast(activity.getString(R.string.success));
                 }
             } catch (IOException e) {
-                activity.showError(e.toString());
+                activity.showError(Arrays.toString(e.getStackTrace()));
             }
             return null;
         }
