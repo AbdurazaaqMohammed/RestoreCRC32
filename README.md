@@ -1,5 +1,7 @@
 # RestoreCRC32
  Android app to set the CRC32 and date modified of files in an APK or ZIP archive to those from another archive.
+
+**This app is outdated and buggy don't use it if you still need CRC spoof use https://github.com/Kirlif/Python-Stuff/blob/main/CRCFix.py**
  
  Some apps on Android (example: apps with Google Pairip Integrity protection) verify the validity of the app by checking the CRC32 and last modified date of files in its own APK. Restoring the values from the original file to a modified one can help in reverse analysis of the application. 
  
